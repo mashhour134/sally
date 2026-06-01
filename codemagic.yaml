@@ -27,6 +27,7 @@ workflows:
           echo "Installing Java 21..."
           brew install openjdk@21
           sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+          export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
           export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo $JAVA_HOME)
           echo "Using Java Home: $JAVA_HOME"
           java -version
@@ -39,11 +40,12 @@ workflows:
       - name: Build Android APK (Debug Version)
         script: |
           # Use JDK 21 compatibility during gradle compilation
+          export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
           export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || echo $JAVA_HOME)
           echo "Using Java Home: $JAVA_HOME"
           java -version
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug -Dorg.gradle.java.home="$JAVA_HOME"
     artifacts:
       - android/app/build/outputs/apk/debug/*.apk
 
