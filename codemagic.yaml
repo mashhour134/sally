@@ -23,6 +23,9 @@ workflows:
           npm run build
       - name: Add Android Platform (if missing) and Sync
         script: |
+          # Set JDK 21 for Java 21 compatibility during CLI commands and task sync
+          export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || echo $JAVA_HOME)
+          echo "Using Java Home: $JAVA_HOME"
           # Checks if Android folder exists, if not adds it
           if [ ! -d "android" ]; then
             npx cap add android
@@ -30,6 +33,10 @@ workflows:
           npx cap sync android
       - name: Build Android APK (Debug Version)
         script: |
+          # Set JDK 21 for Java 21 compilation compatibility
+          export JAVA_HOME=$(/usr/libexec/java_home -v 21 2>/dev/null || /usr/libexec/java_home -v 17 2>/dev/null || echo $JAVA_HOME)
+          echo "Using Java Home: $JAVA_HOME"
+          java -version
           cd android
           ./gradlew assembleDebug
     artifacts:
