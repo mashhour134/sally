@@ -5,7 +5,7 @@ import {
   Activity, AlertTriangle, ChevronDown, RefreshCw, Cpu, 
   Database, Bell, CheckCircle, Flame, MapPin, Sliders,
   Home, TrendingUp, Cpu as ChipIcon, ShieldAlert, Award, 
-  Settings, User, Zap, VolumeX, Volume2
+  Settings, User, Zap, VolumeX, Volume2, PhoneCall
 } from "lucide-react";
 
 import { Device } from "./types";
@@ -37,6 +37,14 @@ export default function App() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [alertsCount, setAlertsCount] = useState(0);
   const [thresholds, setThresholds] = useState({ safe: 200, warning: 500, danger: 1023 });
+  const [emergencyPhone, setEmergencyPhone] = useState(() => {
+    return localStorage.getItem("smart_savior_emg_phone") || "997";
+  });
+
+  const handleUpdateEmergencyPhone = (phone: string) => {
+    setEmergencyPhone(phone);
+    localStorage.setItem("smart_savior_emg_phone", phone);
+  };
 
   // Web Audio Context state for Emergency Alarm
   const [emergencyMuted, setEmergencyMuted] = useState(false);
@@ -70,7 +78,7 @@ export default function App() {
   }, [selectedDeviceId]);
 
   // Check and handle custom physical audio alarms when sensor overrides danger threshold
-  const activeDevice = devices.find((d) => d.id === selectedDeviceId);
+  const activeDevice = devices.find((d) => d.id === selectedDeviceId) || devices[0];
   const isDangerZone = activeDevice && activeDevice.status === "online" && activeDevice.sensorValue > thresholds.warning;
 
   // Synthesize physical sirens loops
@@ -210,6 +218,8 @@ export default function App() {
             onChangeTheme={setThemeMode}
             thresholds={thresholds}
             onUpdateThresholds={setThresholds}
+            emergencyPhone={emergencyPhone}
+            onUpdateEmergencyPhone={handleUpdateEmergencyPhone}
           />
         );
       case "profile":
@@ -320,7 +330,7 @@ export default function App() {
       : "bg-slate-950 text-slate-100";
 
   return (
-    <div id="application-layout" className="h-[100dvh] lg:h-auto lg:min-h-screen bg-slate-950 flex flex-col justify-between select-none relative overflow-hidden lg:overflow-x-hidden p-0 lg:pt-4 lg:pb-8 lg:px-4 font-sans text-slate-100">
+    <div id="application-layout" className="h-[100dvh] lg:h-auto lg:min-h-screen bg-slate-950 flex flex-col justify-between select-none relative overflow-hidden lg:overflow-x-hidden p-0 pb-[calc(env(safe-area-inset-bottom,0px))] pt-[calc(env(safe-area-inset-top,0px))] lg:pt-4 lg:pb-8 lg:px-4 font-sans text-slate-100">
       
       {/* Background ambient glowing shapes to make it super elegant */}
       <div className="absolute top-[10%] left-[-20%] w-[450px] h-[450px] bg-sky-950/20 rounded-full blur-[140px] pointer-events-none" />
@@ -334,8 +344,8 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-xl font-bold font-sans tracking-tight text-white flex items-center gap-1.5">
-              <span>حارس الهواء</span>
-              <span className="text-xs uppercase font-mono tracking-widest px-2 py-0.5 rounded-md bg-slate-900 text-slate-400 border border-slate-800">Air Guard</span>
+              <span>المنقذ الذكي</span>
+              <span className="text-xs uppercase font-mono tracking-widest px-2 py-0.5 rounded-md bg-slate-900 text-slate-400 border border-slate-800">Smart Savior</span>
             </h1>
             <span className="text-[10px] text-slate-500 font-sans block mt-0.5">
               {isAr ? "لوحة الإشراف المتكاملة لإنترنت الأشياء (IoT)" : "Supervisory Developer Workspace Console"}
@@ -510,10 +520,25 @@ export default function App() {
                   </p>
 
                   {/* Actions buttons inside emergency warning */}
-                  <div className="mt-6 space-y-2 w-full select-none">
+                  <div className="mt-6 space-y-2.5 w-full select-none">
+                    {/* Brand New Emergency Speed Dial Button */}
+                    <a
+                      href={`tel:${emergencyPhone}`}
+                      className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-600 hover:to-orange-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-[0_8px_30px_rgba(239,68,68,0.5)] border border-red-400/40 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 cursor-pointer text-center select-none no-underline"
+                    >
+                      <PhoneCall className="w-4 h-4 text-white shrink-0 animate-bounce" style={{ animationDuration: '1.2s' }} />
+                      <span>
+                        {isAr 
+                          ? `📞 اتصال عاجل بالطوارئ: ${emergencyPhone}` 
+                          : `📞 Emergency Speed Dial: ${emergencyPhone}`
+                        }
+                      </span>
+                    </a>
+
                     <button
+                      type="button"
                       onClick={() => setEmergencyMuted(!emergencyMuted)}
-                      className="w-full py-2.5 bg-white text-red-900 font-bold rounded-xl text-xs hover:bg-slate-100 transition-colors cursor-pointer"
+                      className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl text-xs border border-white/10 transition-colors cursor-pointer"
                     >
                       {emergencyMuted ? (isAr ? "تفعيل صوت الإنذار" : "Unmute Siren") : (isAr ? "كتم جرس الطوارئ" : "Mute Siren")}
                     </button>
@@ -550,7 +575,7 @@ export default function App() {
             </div>
 
             {/* Mobile Bottom Navigation Bar styled to match Material Design 3 */}
-            <div className={`px-2 pt-1.5 pb-3.5 border-t select-none z-30 transition-colors ${
+            <div className={`px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] lg:pb-3.5 border-t select-none z-30 transition-colors ${
               isPinkThemeActive
                 ? "bg-rose-50 border-rose-200/50"
                 : isLightThemeActive 

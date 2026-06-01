@@ -1,5 +1,5 @@
 {
-  "name": "Air Guard",
+  "name": "Smart Savior",
   "description": "نظام ذكي متكامل ومحمول باللغة العربية لمراقبة جودة الهواء والتحكم في أجهزة ESP32 ومستشعر MQ135 في الوقت الفعلي مع لوحة تحكم متقدمة.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

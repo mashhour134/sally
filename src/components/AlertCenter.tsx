@@ -91,13 +91,13 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
 
   const handleSimulateExport = () => {
     // Write nice summary print alert
-    const header = isAr ? "--- تقرير ملخص إنذارات Air Guard ---" : "--- Air Guard Alarms Summary ---";
+    const header = isAr ? "--- تقرير ملخص إنذارات المنقذ الذكي ---" : "--- Smart Savior Alarms Summary ---";
     const body = alerts.map(a => `[${a.timestamp.slice(11, 16)}] [${a.severity.toUpperCase()}] ${a.deviceName}: ${a.message}`).join("\n");
     const blob = new Blob([header + "\n" + body], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Air_Guard_Alert_Logs_${new Date().toISOString().slice(0, 10)}.txt`;
+    link.download = `Smart_Savior_Alert_Logs_${new Date().toISOString().slice(0, 10)}.txt`;
     link.click();
     URL.revokeObjectURL(url);
   };

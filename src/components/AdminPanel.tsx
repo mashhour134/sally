@@ -76,12 +76,12 @@ export default function AdminPanel({ devices, selectedDevice, lang }: AdminPanel
     setIsDownloading(`${reportName}-${type}`);
     setTimeout(() => {
       // Create a nice file download simulation
-      const content = `AIR GUARD SYSTEM REPORT\nType: ${reportName}\nFormat: ${type.toUpperCase()}\nCreated At: 2026-06-01\nTarget Device: ${selectedDevice.name}\nMAC: ${selectedDevice.macAddress}\nAverage AQI: ${selectedDevice.aqi}\n\nThis file represents a commercial audit record exported from Air Guard.`;
+      const content = `SMART SAVIOR SYSTEM REPORT\nType: ${reportName}\nFormat: ${type.toUpperCase()}\nCreated At: 2026-06-01\nTarget Device: ${selectedDevice.name}\nMAC: ${selectedDevice.macAddress}\nAverage AQI: ${selectedDevice.aqi}\n\nThis file represents a commercial audit record exported from Smart Savior.`;
       const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Air_Guard_Report_${reportName}.${type === "pdf" ? "pdf" : "xlsx"}`;
+      link.download = `Smart_Savior_Report_${reportName}.${type === "pdf" ? "pdf" : "xlsx"}`;
       link.click();
       URL.revokeObjectURL(url);
       setIsDownloading("");

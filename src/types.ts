@@ -120,8 +120,8 @@ export function getAqiCategory(aqi: number): {
       nameEn: "Excellent",
       color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/30",
       bgGlow: "shadow-emerald-500/10",
-      recommendationAr: "جودة الهواء ممتازة، ومثالية للأنشطة الخارجية.",
-      recommendationEn: "Air quality is excellent. Ideal for outdoor activities."
+      recommendationAr: "جودة الهواء ممتازة، ومثالية وآمنة تماماً داخل المنزل.",
+      recommendationEn: "Air quality is excellent. Extremely safe indoors."
     };
   } else if (aqi <= 100) {
     return {
@@ -140,8 +140,8 @@ export function getAqiCategory(aqi: number): {
       nameEn: "Moderate",
       color: "text-amber-500 bg-amber-500/10 border-amber-500/30",
       bgGlow: "shadow-amber-500/10",
-      recommendationAr: "يجب على الفئات الحساسة تقليل المجهود البدني والتعرض الخارجي الطويل.",
-      recommendationEn: "Sensitive individuals should reduce prolonged physical exertion."
+      recommendationAr: "يجب على الفئات الحساسة في المنزل أخذ أقساط من الراحة والحد من الجهد الزائد.",
+      recommendationEn: "Sensitive individuals should rest and reduce intense physical exertion inside."
     };
   } else if (aqi <= 200) {
     return {
@@ -150,8 +150,8 @@ export function getAqiCategory(aqi: number): {
       nameEn: "Unhealthy",
       color: "text-orange-500 bg-orange-500/10 border-orange-500/30",
       bgGlow: "shadow-orange-500/20 pulse-orange",
-      recommendationAr: "الهواء غير صحي للجميع. يرجى الحد من الأنشطة الخارجية وإغلاق النوافذ.",
-      recommendationEn: "Air is unhealthy. Limit outdoor activities and close windows."
+      recommendationAr: "الهواء غير صحي للجميع داخل الغرف. يرجى تهوية الغرف ومراقبة تسريب الغاز.",
+      recommendationEn: "Air is unhealthy indoors. Please ventilate the rooms and check for gas leaks."
     };
   } else if (aqi <= 300) {
     return {

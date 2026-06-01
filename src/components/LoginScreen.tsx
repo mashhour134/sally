@@ -21,7 +21,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
 
   const t = {
     ar: {
-      welcome: "أهلاً بك في نظام Air Guard",
+      welcome: "أهلاً بك في نظام المنقذ الذكي",
       sub: "سجّل الدخول لمتابعة ومراقبة جودة الهواء حول منزلك وعنابرك بأمان.",
       email: "البريد الإلكتروني",
       password: "كلمة المرور",
@@ -39,7 +39,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       guestLogin: "الدخول كمسؤول شبكة (دخول سريع)"
     },
     en: {
-      welcome: "Welcome to Air Guard",
+      welcome: "Welcome to Smart Savior",
       sub: "Sign in to securely monitor and manage your local air quality and ESP32 nodes.",
       email: "Email Address",
       password: "Password",
@@ -107,7 +107,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       <header className="flex items-center justify-between z-10">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-sky-400" />
-          <span className="text-sm font-sans font-bold text-sky-300">Air Guard IO</span>
+          <span className="text-sm font-sans font-bold text-sky-300">Smart Savior IO</span>
         </div>
         <button
           onClick={() => setLang(lang === "ar" ? "en" : "ar")}

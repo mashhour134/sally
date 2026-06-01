@@ -73,7 +73,7 @@ export default function SplashScreen({ onLoadingComplete }: SplashScreenProps) {
           transition={{ delay: 0.2, duration: 0.6 }}
           className="text-4xl font-sans font-bold tracking-tight bg-gradient-to-r from-sky-400 via-sky-100 to-emerald-400 bg-clip-text text-transparent"
         >
-          حارس الهواء | Air Guard
+          المنقذ الذكي | Smart Savior
         </motion.h1>
 
         <motion.p

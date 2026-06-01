@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
   Settings, Moon, Sun, Monitor, Bell, Volume2, 
-  Vibrate, Shield, Sliders, RefreshCw, FolderLock, Globe, Heart
+  Vibrate, Shield, Sliders, RefreshCw, FolderLock, Globe, Heart, PhoneCall
 } from "lucide-react";
 
 interface SettingsScreenProps {
@@ -11,6 +11,8 @@ interface SettingsScreenProps {
   onChangeTheme: (theme: "light" | "dark" | "pink") => void;
   thresholds: { safe: number; warning: number; danger: number };
   onUpdateThresholds: (thresholds: { safe: number; warning: number; danger: number }) => void;
+  emergencyPhone: string;
+  onUpdateEmergencyPhone: (phone: string) => void;
 }
 
 export default function SettingsScreen({
@@ -19,7 +21,9 @@ export default function SettingsScreen({
   theme,
   onChangeTheme,
   thresholds,
-  onUpdateThresholds
+  onUpdateThresholds,
+  emergencyPhone,
+  onUpdateEmergencyPhone
 }: SettingsScreenProps) {
   const [notify, setNotify] = useState(true);
   const [sound, setSound] = useState(true);
@@ -32,6 +36,9 @@ export default function SettingsScreen({
   const [warnVal, setWarnVal] = useState(thresholds.warning);
   const [dangerVal, setDangerVal] = useState(thresholds.danger);
   const [isSuccessSave, setIsSuccessSave] = useState(false);
+  
+  const [phoneNumber, setPhoneNumber] = useState(emergencyPhone);
+  const [isSuccessPhoneSave, setIsSuccessPhoneSave] = useState(false);
 
   const isAr = lang === "ar";
   const t = {
@@ -286,6 +293,54 @@ export default function SettingsScreen({
             />
           </div>
         </div>
+      </div>
+
+      {/* 5. Emergency Phone Number Configuration */}
+      <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-4 font-sans text-right">
+        <h4 className="text-xs font-bold text-white flex items-center gap-1.5 mb-1.5 select-none">
+          <PhoneCall className="w-4 h-4 text-red-400 animate-pulse" />
+          <span>{isAr ? "إعداد هاتف الطوارئ والاستجابة السريعة" : "Emergency Call Configuration"}</span>
+        </h4>
+        <p className="text-[10px] text-slate-500 leading-relaxed mb-4">
+          {isAr 
+            ? "حدد الرقم الذي ترغب في الاتصال به فوراً بضغطة واحدة من شاشة إنذار تسريب الغاز بالمنزل" 
+            : "Define the specific contact number to dial immediately when our indoor gas leak warning activates."}
+        </p>
+
+        {isSuccessPhoneSave && (
+          <div className="p-2 mb-3 bg-red-950/40 border border-red-500/30 text-red-300 text-[10px] rounded-xl flex items-center justify-center gap-2">
+            <span>{isAr ? "✅ تم تحديث رقم الطوارئ بنجاح!" : "✅ Emergency phone updated successfully!"}</span>
+          </div>
+        )}
+
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          onUpdateEmergencyPhone(phoneNumber);
+          setIsSuccessPhoneSave(true);
+          setTimeout(() => setIsSuccessPhoneSave(false), 3000);
+        }} className="space-y-3">
+          <div className="flex flex-col gap-1 text-right">
+            <label className="text-[10px] text-slate-400">
+              {isAr ? "رقم الطوارئ المستهدف (مثل: 997 الدفاع المدني، أو رقم شخصي)" : "Target emergency digits (e.g. 997 Civil Defense, or personal contact)"}
+            </label>
+            <input
+              type="text"
+              dir="ltr"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full text-center tracking-widest font-mono font-bold bg-slate-950/80 border border-slate-800 focus:border-red-500 text-red-400 py-2 px-3.5 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500 transition-all shadow-inner"
+              placeholder="997"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2 bg-red-950/40 border border-red-500/30 hover:border-red-500/60 text-red-300 hover:text-white font-bold rounded-xl text-[11px] transition-colors cursor-pointer select-none"
+          >
+            {isAr ? "💾 حفظ رقم الاتصال للطوارئ" : "💾 Save Emergency Number"}
+          </button>
+        </form>
       </div>
     </div>
   );
