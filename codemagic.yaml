@@ -70,16 +70,15 @@ workflows:
       - name: Build React Web Assets
         script: |
           npm run build
-      - name: Add iOS Platform, Sync and Install Pods
+      - name: Add iOS Platform and Sync
         script: |
           rm -rf ios
           npx cap add ios
           npx cap sync ios
-          cd ios/App && pod install
       - name: Build iOS Simulator App (No Code Signing Required)
         script: |
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -sdk iphonesimulator \
             -configuration Debug \
