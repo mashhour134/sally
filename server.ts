@@ -9,8 +9,14 @@ import {
   AutomationRule, 
   SystemLog, 
   calculateAqi, 
-  getAqiCategory 
+  getAqiCategory,
+  AirStatus
 } from "./src/types.js";
+
+// Firebase RTDB imports for live ESP32 integration
+import { initializeApp as initFirebase, getApps as getFirebaseApps } from "firebase/app";
+import { getAuth as getFirebaseAuth, signInWithEmailAndPassword as signInFirebase } from "firebase/auth";
+import { getDatabase as getFirebaseDb, ref as refFirebase, onValue as onValueFirebase } from "firebase/database";
 
 // Initialize Gemini Client
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -104,6 +110,24 @@ const devices: Device[] = [
     macAddress: "A0:2B:B3:F8:88:99",
     sensorHealth: "critical",
     dataTransmission: "stopped"
+  },
+  {
+    id: "firebase-gas-sensor",
+    name: "مستشعر الغاز الفعلي (ESP32)",
+    location: "منزل العميل الذكي",
+    roomName: "منزلي - شبكة Firebase النشطة",
+    status: "offline",
+    lastSeen: new Date().toISOString(),
+    sensorValue: 0,
+    aqi: 0,
+    wifiSignal: "good",
+    wifiRssi: -55,
+    batteryLevel: 100,
+    uptime: 0,
+    firmwareVersion: "v1.0.0-rtdb",
+    macAddress: "32:B4:EF:22:90:DA",
+    sensorHealth: "healthy",
+    dataTransmission: "active"
   }
 ];
 
@@ -817,6 +841,125 @@ if (process.env.NODE_ENV === "production") {
   };
   startDevServer();
 }
+
+// Background Firebase Realtime Database Listener for real-time ESP32 device integration
+const fbConfig = {
+  apiKey: "AIzaSyDo09di_vPt-rRSYbg9K_cV-mND0dZ6Sd0",
+  databaseURL: "https://smartsaver-7d551-default-rtdb.firebaseio.com/",
+  authDomain: "smartsaver-7d551.firebaseapp.com",
+  projectId: "smartsaver-7d551",
+};
+
+const fbAuthCreds = {
+  email: "esp32@smartsaver.com",
+  password: "12345678",
+};
+
+function startFirebaseBackgroundListener() {
+  try {
+    const app = initFirebase(fbConfig);
+    const auth = getFirebaseAuth(app);
+    const db = getFirebaseDb(app);
+
+    signInFirebase(auth, fbAuthCreds.email, fbAuthCreds.password)
+      .then((userCred) => {
+        console.log("Backend signed in successfully to ESP32 Firebase RTDB.");
+        
+        systemLogs.unshift({
+          id: `sys-rfb-init-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          level: "info",
+          message: "تم ربط الخادم بنجاح بقاعدة بيانات Firebase ومزامنة حساس الغاز (ESP32) في الوقت الفعلي.",
+          source: "System"
+        });
+
+        const sensorRef = refFirebase(db, "home/gas_sensor");
+        onValueFirebase(
+          sensorRef,
+          (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+              const level = typeof val.level === "number" ? val.level : 0;
+              const status = val.status || "safe"; // can be safe, warning, danger
+              const lastUpdate = typeof val.last_update === "number" ? val.last_update : Math.floor(Date.now() / 1000);
+
+              // Update devices array for 'firebase-gas-sensor'
+              const sensorDev = devices.find(d => d.id === "firebase-gas-sensor");
+              if (sensorDev) {
+                // Since we are actively receiving bytes, the device is online
+                sensorDev.status = "online";
+                // Convert percentage back to 10-bit raw range (0 - 1023)
+                const rawVal = Math.round((level / 100) * 1023);
+                sensorDev.sensorValue = rawVal;
+                sensorDev.aqi = calculateAqi(rawVal);
+                sensorDev.lastSeen = new Date().toISOString(); // use fresh web server timestamp for precision
+                sensorDev.uptime = Math.max(0, Math.floor(lastUpdate / 1000)); // C++ posts millis()
+                sensorDev.dataTransmission = "active";
+                
+                const airStatus: AirStatus = level > 50.0 ? "danger" : (level >= 6.0 ? "warning" : "safe");
+
+                // Add readings back into historic data
+                readingsHist.push({
+                  id: `firebase-${Date.now()}`,
+                  deviceId: "firebase-gas-sensor",
+                  sensorValue: rawVal,
+                  aqi: sensorDev.aqi,
+                  airStatus,
+                  timestamp: new Date().toISOString(),
+                  wifiStatus: sensorDev.wifiSignal,
+                  deviceStatus: "online"
+                });
+                if (readingsHist.length > 1000) readingsHist.shift();
+
+                // Raise alarms if in warning or danger levels based on new ESP32 threshold rules!
+                if (level > 50.0) {
+                  const alreadyHasDanger = alerts.some(a => a.deviceId === "firebase-gas-sensor" && a.severity === "danger" && !a.resolved);
+                  if (!alreadyHasDanger) {
+                    alerts.unshift({
+                      id: `alert-firebase-dang-${Date.now()}`,
+                      deviceId: "firebase-gas-sensor",
+                      deviceName: sensorDev.name,
+                      type: "air_quality",
+                      severity: "danger",
+                      value: rawVal,
+                      message: `تنبيه أحمر عاجل خطير جداً🚨 (أعلى من 50%): تم كشف تسريب غاز مرتفع بـ ${sensorDev.name} في المنزل! القيمة الحالية لقراءة الغاز: ${level.toFixed(1)}% - يرجى تهوية الغرف فوراً!`,
+                      timestamp: new Date().toISOString(),
+                      resolved: false
+                    });
+                  }
+                } else if (level >= 6.0) {
+                  const alreadyHasWarning = alerts.some(a => a.deviceId === "firebase-gas-sensor" && a.severity === "warning" && !a.resolved);
+                  if (!alreadyHasWarning) {
+                    alerts.unshift({
+                      id: `alert-firebase-warn-${Date.now()}`,
+                      deviceId: "firebase-gas-sensor",
+                      deviceName: sensorDev.name,
+                      type: "air_quality",
+                      severity: "warning",
+                      value: rawVal,
+                      message: `تنبيه برتقالي تحذيري⚠️ (أعلى من 6.0%): تم كشف ارتفاع طفيف في قراءة الغاز بجهاز ${sensorDev.name}. القيمة الحالية: ${level.toFixed(1)}% - يرجى المراقبة المستمرة.`,
+                      timestamp: new Date().toISOString(),
+                      resolved: false
+                    });
+                  }
+                }
+              }
+            }
+          },
+          (err) => {
+            console.error("Firebase value listen error in backend:", err);
+          }
+        );
+      })
+      .catch((err) => {
+        console.warn("Could not sign in to Firebase in backend (possibly missing credentials or locked RTDB):", err.message);
+      });
+  } catch (err: any) {
+    console.warn("Firebase initialization skipped in backend:", err.message);
+  }
+}
+
+startFirebaseBackgroundListener();
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Air Guard Server is listening on port ${PORT}`);

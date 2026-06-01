@@ -20,6 +20,7 @@ import AdminPanel from "./components/AdminPanel";
 import SettingsScreen from "./components/SettingsScreen";
 import UserProfile from "./components/UserProfile";
 import AutomationRules from "./components/AutomationRules";
+import FirebaseBridge from "./components/FirebaseBridge";
 
 export default function App() {
   // Authentication states
@@ -29,7 +30,7 @@ export default function App() {
   // Layout preference states
   const [lang, setLang] = useState<"ar" | "en">("ar");
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "pink">("dark");
-  const [activeTab, setActiveTab] = useState<"home" | "analytics" | "alerts" | "devices" | "admin" | "settings" | "profile" | "automation" | "menu">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "analytics" | "alerts" | "devices" | "admin" | "settings" | "profile" | "automation" | "menu" | "firebase">("home");
   const [mobileViewMode, setMobileViewMode] = useState<"app" | "hardware">("app");
 
   // Telemetry sensor states
@@ -62,8 +63,15 @@ export default function App() {
         const data = await res.json();
         setDevices(data);
         // Default select first device
-        if (data.length > 0 && !selectedDeviceId) {
-          setSelectedDeviceId(data[0].id);
+        if (data.length > 0) {
+          if (!selectedDeviceId) {
+            const hasOnlineFirebase = data.find((d: any) => d.id === "firebase-gas-sensor" && d.status === "online");
+            if (hasOnlineFirebase) {
+              setSelectedDeviceId("firebase-gas-sensor");
+            } else {
+              setSelectedDeviceId(data[0].id);
+            }
+          }
         }
       }
     } catch (err) {
@@ -235,6 +243,8 @@ export default function App() {
         );
       case "automation":
         return <AutomationRules lang={lang} />;
+      case "firebase":
+        return <FirebaseBridge devices={devices} lang={lang} activeDevice={activeDevice} />;
       case "menu":
         return (
           <div className="space-y-4 select-none pb-4">
@@ -299,6 +309,25 @@ export default function App() {
                 </div>
               </button>
             </div>
+
+            {/* Live Firebase IoT Bridge Section Card */}
+            <button
+              onClick={() => setActiveTab("firebase")}
+              className="w-full mt-3 p-4 bg-gradient-to-r from-sky-950/80 to-indigo-950/80 hover:from-sky-900 border border-sky-500/20 rounded-2xl text-right flex items-center justify-between cursor-pointer transition-all hover:scale-[1.01] shadow-lg group"
+            >
+              <div className="flex items-center gap-3 font-sans">
+                <div className="p-2.5 bg-sky-500/15 text-sky-400 rounded-xl group-hover:scale-110 transition-transform">
+                  <Database className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <span className="font-bold text-xs text-white block leading-tight">{isAr ? "جسر Firebase للـ ESP32 حياً" : "Firebase Hardware Bridge"}</span>
+                  <span className="text-[9px] text-slate-300 block mt-1">{isAr ? "توصيل الحساس الفعلي وإشعارات الألوان" : "C++ code, color metrics & alerts"}</span>
+                </div>
+              </div>
+              <div className="text-sky-400 font-bold text-[10px] bg-sky-500/10 px-2 py-1 rounded-lg">
+                {isAr ? "موصول حياً" : "Live"}
+              </div>
+            </button>
           </div>
         );
       default:
