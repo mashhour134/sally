@@ -4,6 +4,7 @@ import {
   Trash2, Download, AlertTriangle, CloudRain, Cpu, RefreshCw
 } from "lucide-react";
 import { SystemAlert } from "../types";
+import { getApiUrl } from "../utils";
 
 interface AlertCenterProps {
   lang: "ar" | "en";
@@ -38,7 +39,7 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
   const fetchAlerts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/alerts");
+      const res = await fetch(getApiUrl("/api/alerts"));
       if (res.ok) {
         const data: SystemAlert[] = await res.json();
         setAlerts(data);
@@ -62,7 +63,7 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
 
   const handleResolve = async (id: string) => {
     try {
-      const res = await fetch(`/api/alerts/${id}/resolve`, {
+      const res = await fetch(getApiUrl(`/api/alerts/${id}/resolve`), {
         method: "POST"
       });
       if (res.ok) {
@@ -77,7 +78,7 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
   const handleClearAll = async () => {
     if (!window.confirm(isAr ? "هل أنت متأكد من مسح جميع تنبيهات السجل بالكامل؟" : "Confirm deleting historical summaries?")) return;
     try {
-      const res = await fetch("/api/alerts/clear", {
+      const res = await fetch(getApiUrl("/api/alerts/clear"), {
         method: "POST"
       });
       if (res.ok) {

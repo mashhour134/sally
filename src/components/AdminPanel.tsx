@@ -4,6 +4,7 @@ import {
   Sparkles, RefreshCw, AlertCircle, Trash2, Globe, CheckCircle
 } from "lucide-react";
 import { Device, SystemLog } from "../types";
+import { getApiUrl } from "../utils";
 
 interface AdminPanelProps {
   devices: Device[];
@@ -41,7 +42,7 @@ export default function AdminPanel({ devices, selectedDevice, lang }: AdminPanel
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch("/api/logs");
+      const res = await fetch(getApiUrl("/api/logs"));
       if (res.ok) {
         const data = await res.json();
         setLogs(data);
@@ -55,7 +56,7 @@ export default function AdminPanel({ devices, selectedDevice, lang }: AdminPanel
     setIsGeneratingAi(true);
     setAiReport("");
     try {
-      const res = await fetch("/api/reports/ai-gen", {
+      const res = await fetch(getApiUrl("/api/reports/ai-gen"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ deviceId: selectedDevice.id })

@@ -21,6 +21,7 @@ import SettingsScreen from "./components/SettingsScreen";
 import UserProfile from "./components/UserProfile";
 import AutomationRules from "./components/AutomationRules";
 import FirebaseBridge from "./components/FirebaseBridge";
+import { getApiUrl } from "./utils";
 
 export default function App() {
   // Authentication states
@@ -58,7 +59,7 @@ export default function App() {
   // Fetch initial devices list and poll state every 3 seconds
   const fetchDevices = async () => {
     try {
-      const res = await fetch("/api/devices");
+      const res = await fetch(getApiUrl("/api/devices"));
       if (res.ok) {
         const data = await res.json();
         setDevices(data);
@@ -159,7 +160,7 @@ export default function App() {
   // Add new device callback
   const handleAddNewDevice = async (newDevice: { name: string; location: string; roomName: string; macAddress?: string }) => {
     try {
-      const res = await fetch("/api/devices/create", {
+      const res = await fetch(getApiUrl("/api/devices/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newDevice)

@@ -6,6 +6,7 @@ import {
   Database, Bell, CheckCircle, Flame, MapPin
 } from "lucide-react";
 import { Device, getAqiCategory, calculateAqi } from "../types";
+import { getApiUrl } from "../utils";
 
 interface HomeDashboardProps {
   devices: Device[];
@@ -104,7 +105,7 @@ export default function HomeDashboard({
 
     // Send the safe state telemetry to the backend server so the system registers safety
     try {
-      await fetch("/api/devices/update-sensor", {
+      await fetch(getApiUrl("/api/devices/update-sensor"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

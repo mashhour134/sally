@@ -5,6 +5,7 @@ import {
   ToggleRight, Play, Server, Clock, Power, ShieldX, BellRing
 } from "lucide-react";
 import { AutomationRule } from "../types";
+import { getApiUrl } from "../utils";
 
 interface AutomationRulesProps {
   lang: "ar" | "en";
@@ -40,7 +41,7 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/rules");
+      const res = await fetch(getApiUrl("/api/rules"));
       if (res.ok) {
         const data = await res.json();
         setRules(data);
@@ -58,7 +59,7 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
 
   const handleToggleRule = async (id: string) => {
     try {
-      const res = await fetch(`/api/rules/${id}/toggle`, { method: "POST" });
+      const res = await fetch(getApiUrl(`/api/rules/${id}/toggle`), { method: "POST" });
       if (res.ok) {
         const updated = await res.json();
         setRules(rules.map(r => r.id === id ? updated : r));
@@ -70,7 +71,7 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
 
   const handleDeleteRule = async (id: string) => {
     try {
-      const res = await fetch(`/api/rules/${id}`, { method: "DELETE" });
+      const res = await fetch(getApiUrl(`/api/rules/${id}`), { method: "DELETE" });
       if (res.ok) {
         setRules(rules.filter(r => r.id !== id));
       }
@@ -83,7 +84,7 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
     e.preventDefault();
     if (!name) return;
     try {
-      const res = await fetch("/api/rules", {
+      const res = await fetch(getApiUrl("/api/rules"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

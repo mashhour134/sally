@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Cpu, Wifi, Battery, Zap, AlertTriangle, RefreshCw, Send, Check } from "lucide-react";
 import { Device, calculateAqi, getAqiCategory } from "../types";
+import { getApiUrl } from "../utils";
 
 interface Esp32SimulatorProps {
   activeDevice: Device;
@@ -53,7 +54,7 @@ export default function Esp32Simulator({ activeDevice, onUpdateDevice }: Esp32Si
     setTimeout(() => setTxBlinker(false), 200);
 
     try {
-      const response = await fetch("/api/devices/update-sensor", {
+      const response = await fetch(getApiUrl("/api/devices/update-sensor"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
