@@ -462,7 +462,7 @@ export default function App() {
         </div>
 
         {/* Right Side: High fidelity smartphone frame container */}
-        <div className={`w-full lg:w-7/12 flex items-center justify-center h-full min-h-0 ${mobileViewMode === "app" ? "block flex flex-col" : "hidden lg:block"}`}>
+        <div className={`w-full lg:w-7/12 flex-col items-center justify-center h-full min-h-0 ${mobileViewMode === "app" ? "flex" : "hidden lg:flex"}`}>
           
           {/* Main Visual Rocket/Mobile Shell Wrapper: act raw & native on real viewports, mock bezel ONLY on desktops */}
           <div 
@@ -515,7 +515,6 @@ export default function App() {
             <div 
               id="smartphone-viewport" 
               className={`flex-1 overflow-y-auto no-scrollbar px-4 py-3 relative transition-colors ${deviceBgClass}`}
-              style={{ contentVisibility: "auto" }}
             >
               {/* Dynamically injected standard BACK header for helper screens context inside mobile More menu tab */}
               {["devices", "admin", "settings", "profile"].includes(activeTab) && (
