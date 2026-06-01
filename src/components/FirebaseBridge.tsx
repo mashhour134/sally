@@ -28,6 +28,7 @@ export default function FirebaseBridge({ devices, lang, activeDevice }: Firebase
   const [bleDevice, setBleDevice] = useState<any>(null);
   const [bleGasLevel, setBleGasLevel] = useState<number | null>(null);
   const [bleCharacteristic, setBleCharacteristic] = useState<any>(null);
+  const [blePermissionIssue, setBlePermissionIssue] = useState<boolean>(false);
 
   // Selected Channel Tab - either "firebase" or "ble"
   const [activeChannel, setActiveChannel] = useState<"firebase" | "ble">("firebase");
@@ -168,9 +169,23 @@ export default function FirebaseBridge({ devices, lang, activeDevice }: Firebase
       console.error("Bluetooth connection failed", err);
       setBleState("disconnected");
       setBleGasLevel(null);
-      // Don't show cancel alert to clutter UI
-      if (err.name !== "NotFoundError") {
-        alert(isAr ? `خطأ اتصال بلوتوث: ${err.message || err}` : `Bluetooth Error: ${err.message || err}`);
+      
+      const errMsg = String(err.message || err);
+      if (
+        err.name === "SecurityError" || 
+        errMsg.toLowerCase().includes("disallowed by permissions policy") || 
+        errMsg.toLowerCase().includes("policy") ||
+        errMsg.toLowerCase().includes("not allowed")
+      ) {
+        setBlePermissionIssue(true);
+        triggerLocalToast(
+          isAr 
+            ? "⚠️ المتصفح يمنع البلوتوث داخل صندوق المعاينة العائم. يرجى فتح التطبيق في علامة تبويب مستقلة!"
+            : "⚠️ Web Bluetooth is blocked inside the sandboxed preview frame. Please open the app in a standalone tab!",
+          "warning"
+        );
+      } else if (err.name !== "NotFoundError") {
+        alert(isAr ? `خطأ في اتصال البلوتوث: ${err.message || err}` : `Bluetooth Error: ${err.message || err}`);
       }
     }
   };
@@ -582,48 +597,84 @@ void loop() {
 
       {/* Connection management banner for selected channel */}
       {activeChannel === "ble" ? (
-        <div className="p-4 bg-slate-900/60 rounded-2xl border border-sky-900/40 font-sans flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${
-              bleState === "connected" ? "bg-sky-500/25 text-sky-400 animate-pulse" : "bg-slate-950 text-slate-500"
-            }`}>
-              <Bluetooth className="w-5 h-5" />
+        <>
+          <div className="p-4 bg-slate-900/60 rounded-2xl border border-sky-900/40 font-sans flex flex-col md:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${
+                bleState === "connected" ? "bg-sky-500/25 text-sky-400 animate-pulse" : "bg-slate-950 text-slate-500"
+              }`}>
+                <Bluetooth className="w-5 h-5" />
+              </div>
+              <div className="text-right sm:text-left">
+                <h4 className="text-xs font-bold text-white">
+                  {bleState === "connected" 
+                    ? (isAr ? "متصل بالبلوتوث حياً بجهازك" : "Linked Direct over BLE")
+                    : bleState === "scanning"
+                      ? (isAr ? "جاري مسح البلوتوث والربط..." : "Scanning for BLE broadcast...")
+                      : (isAr ? "اتصال البلوتوث المباشر معلق" : "Local Direct BLE offline")}
+                </h4>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {isAr 
+                    ? "قم بالاقتران بجهازك ESP32 لتحديث العداد حياً وبسرعة كل 500 ملي ثانية بدون إنترنت!"
+                    : "Connect to receive immediate sub-second telemetry feed without internet access."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-xs font-bold text-white">
-                {bleState === "connected" 
-                  ? (isAr ? "متصل بالبلوتوث حياً بجهازك" : "Linked Direct over BLE")
-                  : bleState === "scanning"
-                    ? (isAr ? "جاري مسح البلوتوث والربط..." : "Scanning for BLE broadcast...")
-                    : (isAr ? "اتصال البلوتوث المباشر معلق" : "Local Direct BLE offline")}
-              </h4>
-              <p className="text-[10px] text-slate-400 mt-1">
-                {isAr 
-                  ? "قم بالاقتران بجهازك ESP32 لتحديث العداد حياً وبسرعة كل 500 ملي ثانية بدون إنترنت!"
-                  : "Connect to receive immediate sub-second telemetry feed without internet access."}
-              </p>
+
+            <div className="flex gap-2">
+              {bleState === "connected" ? (
+                <button
+                  onClick={disconnectBle}
+                  className="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-500/30 text-xs rounded-xl font-bold cursor-pointer transition-all"
+                >
+                  {isAr ? "قطع الاتصال" : "Disconnect"}
+                </button>
+              ) : (
+                <button
+                  onClick={connectToBle}
+                  className="py-1.5 px-4 bg-sky-500 hover:bg-sky-600 text-slate-950 text-xs rounded-xl font-extrabold flex items-center gap-1 cursor-pointer transition-all shadow-lg"
+                >
+                  <RefreshCw className={`w-3 h-3 ${bleState === "scanning" ? "animate-spin" : ""}`} />
+                  <span>{isAr ? "ابحث عن الحساس (SmartSaver ESP32)" : "Scan SmartSaver ESP32"}</span>
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex gap-2">
-            {bleState === "connected" ? (
-              <button
-                onClick={disconnectBle}
-                className="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-500/30 text-xs rounded-xl font-bold cursor-pointer transition-all"
-              >
-                {isAr ? "قطع الاتصال" : "Disconnect"}
-              </button>
-            ) : (
-              <button
-                onClick={connectToBle}
-                className="py-1.5 px-4 bg-sky-500 hover:bg-sky-600 text-slate-950 text-xs rounded-xl font-extrabold flex items-center gap-1 cursor-pointer transition-all shadow-lg"
-              >
-                <RefreshCw className={`w-3 h-3 ${bleState === "scanning" ? "animate-spin" : ""}`} />
-                <span>{isAr ? "ابحث عن الحساس (SmartSaver ESP32)" : "Scan SmartSaver ESP32"}</span>
-              </button>
-            )}
-          </div>
-        </div>
+          {blePermissionIssue && (
+            <div className="p-4 bg-amber-950/25 border border-amber-500/30 rounded-2xl text-right font-sans space-y-3 animate-fade-in">
+              <div className="flex items-start gap-2.5 justify-end">
+                <div className="text-amber-400 font-bold text-xs">
+                  {isAr 
+                    ? "إرشادات حل مشكلة إذن البلوتوث (داخل الإطار)" 
+                    : "Bluetooth Browser Sandbox Guide"}
+                </div>
+                <AlertCircle className="w-4.5 h-4.5 text-amber-500 mt-0.5" />
+              </div>
+              <p className="text-[10px] text-slate-300 leading-relaxed text-right">
+                {isAr 
+                  ? "تمنع المتصفحات الحديثة استخدام البلوتوث (Web Bluetooth) بداخل أطر المعاينة (iframes) لأسباب أمنية. لتشغيل الاتصال المباشر بجهاز ESP32 بنجاح، يرجى فتح التطبيق كصفحة مستقلة كاملة الصلاحيات بالضغط على الزر أدناه والاقتران فوراً، أو استعمال ملف الـ APK المرفق."
+                  : "Modern web browsers block direct physical Bluetooth queries when viewed inside embedded iframes. To scan and pair with your ESP32 device, simply open the app page directly in a standalone browser tab via the link below:"}
+              </p>
+              <div className="flex justify-end gap-2 text-[10px]">
+                <button
+                  onClick={() => setBlePermissionIssue(false)}
+                  className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-slate-400 font-bold rounded-lg cursor-pointer"
+                >
+                  {isAr ? "تجاوز" : "Dismiss"}
+                </button>
+                <a
+                  href="https://ais-pre-w5jjoq3gswyhdccvim4iau-709382146758.europe-west2.run.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 bg-amber-500 text-slate-950 font-extrabold rounded-lg tracking-wide hover:bg-amber-400 transition-all"
+                >
+                  {isAr ? "فتح النافذة المستقلة البلوتوث ↗" : "Launch Standalone Web App ↗"}
+                </a>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="p-4 bg-slate-900/60 rounded-2xl border border-indigo-900/40 font-sans flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">

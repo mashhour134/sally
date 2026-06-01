@@ -35,8 +35,112 @@ export default function App() {
   const [mobileViewMode, setMobileViewMode] = useState<"app" | "hardware">("app");
 
   // Telemetry sensor states
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
+  const [devices, setDevices] = useState<Device[]>(() => {
+    const saved = localStorage.getItem("smart_savior_local_devices");
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: "living-room",
+        name: "مستشعر المعيشة",
+        location: "الصالة الرئيسية",
+        roomName: "غرفة الجلوس",
+        status: "online",
+        lastSeen: new Date().toISOString(),
+        sensorValue: 145,
+        aqi: 48,
+        wifiSignal: "excellent",
+        wifiRssi: -45,
+        batteryLevel: 88,
+        uptime: 12450,
+        firmwareVersion: "v2.1.4-beta",
+        macAddress: "24:0A:C4:B3:11:0C",
+        sensorHealth: "healthy",
+        dataTransmission: "active"
+      },
+      {
+        id: "poultry-farm",
+        name: "مستشعر العنبر 1",
+        location: "مزرعة الدواجن كفر الصالحين",
+        roomName: "مستودع الحضانة",
+        status: "online",
+        lastSeen: new Date().toISOString(),
+        sensorValue: 420,
+        aqi: 160,
+        wifiSignal: "good",
+        wifiRssi: -68,
+        batteryLevel: 55,
+        uptime: 432900,
+        firmwareVersion: "v2.1.2",
+        macAddress: "4C:11:AE:03:99:AA",
+        sensorHealth: "warning",
+        dataTransmission: "active"
+      },
+      {
+        id: "warehouse",
+        name: "مستشعر المخزن",
+        location: "مستودع الشحن الرئيسي",
+        roomName: "منطقة فرز الأدوية",
+        status: "online",
+        lastSeen: new Date().toISOString(),
+        sensorValue: 85,
+        aqi: 28,
+        wifiSignal: "weak",
+        wifiRssi: -82,
+        batteryLevel: 95,
+        uptime: 86400,
+        firmwareVersion: "v2.1.3",
+        macAddress: "30:AE:A4:07:FF:21",
+        sensorHealth: "healthy",
+        dataTransmission: "active"
+      },
+      {
+        id: "office-main",
+        name: "مستشعر الإدارة",
+        location: "مجمع المكاتب",
+        roomName: "المكتب الإداري",
+        status: "offline",
+        lastSeen: new Date(Date.now() - 17 * 60 * 1000).toISOString(),
+        sensorValue: 0,
+        aqi: 0,
+        wifiSignal: "none",
+        wifiRssi: -100,
+        batteryLevel: 0,
+        uptime: 0,
+        firmwareVersion: "v2.1.3",
+        macAddress: "A0:2B:B3:F8:88:99",
+        sensorHealth: "critical",
+        dataTransmission: "stopped"
+      },
+      {
+        id: "firebase-gas-sensor",
+        name: "مستشعر الغاز الفعلي (ESP32)",
+        location: "منزل العميل الذكي",
+        roomName: "منزلي - شبكة Firebase النشطة",
+        status: "offline",
+        lastSeen: new Date().toISOString(),
+        sensorValue: 0,
+        aqi: 0,
+        wifiSignal: "good",
+        wifiRssi: -55,
+        batteryLevel: 100,
+        uptime: 0,
+        firmwareVersion: "v1.0.0-rtdb",
+        macAddress: "32:B4:EF:22:90:DA",
+        sensorHealth: "healthy",
+        dataTransmission: "active"
+      }
+    ];
+  });
+
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(() => {
+    const saved = localStorage.getItem("smart_savior_local_devices");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0) return parsed[0].id;
+    }
+    return "living-room";
+  });
+
   const [alertsCount, setAlertsCount] = useState(0);
   const [thresholds, setThresholds] = useState({ safe: 200, warning: 500, danger: 1023 });
   const [emergencyPhone, setEmergencyPhone] = useState(() => {
@@ -63,6 +167,7 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setDevices(data);
+        localStorage.setItem("smart_savior_local_devices", JSON.stringify(data));
         // Default select first device
         if (data.length > 0) {
           if (!selectedDeviceId) {
@@ -76,7 +181,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.error("Failed to synchronizing network devices:", err);
+      console.warn("Failed to synchronize network devices, running offline with current cache:", err);
     }
   };
 
@@ -159,6 +264,32 @@ export default function App() {
 
   // Add new device callback
   const handleAddNewDevice = async (newDevice: { name: string; location: string; roomName: string; macAddress?: string }) => {
+    const localId = `device-${Date.now()}`;
+    const mockCreated: Device = {
+      id: localId,
+      name: newDevice.name,
+      location: newDevice.location,
+      roomName: newDevice.roomName,
+      status: "online",
+      lastSeen: new Date().toISOString(),
+      sensorValue: 60,
+      aqi: 20,
+      wifiSignal: "excellent",
+      wifiRssi: -30,
+      batteryLevel: 100,
+      uptime: 0,
+      firmwareVersion: "v1.0-local",
+      macAddress: newDevice.macAddress || "00:11:22:33:44:55",
+      sensorHealth: "healthy",
+      dataTransmission: "active"
+    };
+
+    const updated = [...devices, mockCreated];
+    setDevices(updated);
+    localStorage.setItem("smart_savior_local_devices", JSON.stringify(updated));
+    setSelectedDeviceId(localId);
+    setActiveTab("home");
+
     try {
       const res = await fetch(getApiUrl("/api/devices/create"), {
         method: "POST",
@@ -167,26 +298,49 @@ export default function App() {
       });
       if (res.ok) {
         const created = await res.json();
-        // Append newly created device
-        setDevices((prev) => [...prev, created]);
+        // Replace temp device with synced backend device
+        const synced = updated.map(d => d.id === localId ? created : d);
+        setDevices(synced);
+        localStorage.setItem("smart_savior_local_devices", JSON.stringify(synced));
         setSelectedDeviceId(created.id);
-        setActiveTab("home");
       }
     } catch (err) {
-      console.error("Error committing register:", err);
+      console.warn("Offline note: Registered device locally.", err);
     }
   };
 
   const handleUpdateSelectedDeviceLocal = (updatedDevice: Device) => {
-    setDevices((prev) => prev.map((d) => (d.id === updatedDevice.id ? updatedDevice : d)));
+    const updated = devices.map((d) => (d.id === updatedDevice.id ? updatedDevice : d));
+    setDevices(updated);
+    localStorage.setItem("smart_savior_local_devices", JSON.stringify(updated));
   };
 
   // Switch tabs helper inside simulator
   const renderSelectedTabScreen = () => {
-    if (!activeDevice) {
+    const needsDevice = ["home", "analytics", "admin", "firebase"].includes(activeTab);
+    
+    if (needsDevice && !activeDevice) {
       return (
-        <div className="h-full flex items-center justify-center text-slate-500 text-xs">
-          {isAr ? "تعذر العثور على أجهزة استشعار بالمنظومة" : "No sensors connected to this workspace."}
+        <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+          <div className="p-3.5 bg-slate-900 border border-slate-800 rounded-full text-slate-500 animate-pulse">
+            <Cpu className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">
+              {isAr ? "⚠️ لا توجد أجهزة متصلة بالمنظومة" : "⚠️ No Connected Devices Found"}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1 max-w-xs leading-normal">
+              {isAr 
+                ? "تعذر العثور على أي مستشعرات نشطة. يرجى إضافة جهاز جديد من قائمة الأجهزة أو بدء وضع المحاكاة."
+                : "No active sensors detected. Please add a new hardware device or start the simulator."}
+            </p>
+          </div>
+          <button
+            onClick={() => setActiveTab("devices")}
+            className="py-1.5 px-4 bg-sky-500 hover:bg-sky-600 font-extrabold text-slate-950 text-xs rounded-xl transition-all cursor-pointer shadow-lg"
+          >
+            {isAr ? "إدارة الأجهزة وإضافة مستشعر" : "Add Hardware Sensor"}
+          </button>
         </div>
       );
     }

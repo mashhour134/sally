@@ -12,8 +12,42 @@ interface AdminPanelProps {
   lang: "ar" | "en";
 }
 
+const DEFAULT_LOGS: SystemLog[] = [
+  {
+    id: "log-1",
+    timestamp: new Date().toISOString(),
+    level: "info",
+    message: "بدء تشغيل منظومة المنقذ الذكي بنجاح وتأسيس الاتصال المقترن",
+    source: "System"
+  },
+  {
+    id: "log-2",
+    timestamp: new Date(Date.now() - 5000).toISOString(),
+    level: "info",
+    message: "اتصال مستشعر الحضانة بالـ WiFi ممتاز بشدة إشارة RSSI: -45dBm",
+    source: "ESP32"
+  },
+  {
+    id: "log-3",
+    timestamp: new Date(Date.now() - 12000).toISOString(),
+    level: "warning",
+    message: "معدل غاز MQ135 مرتفع قليلاً في عنبر الدواجن (220 PPM)",
+    source: "ESP32"
+  },
+  {
+    id: "log-4",
+    timestamp: new Date(Date.now() - 25000).toISOString(),
+    level: "error",
+    message: "تحذير: عطل فاصم وفقدان الاتصال بمستشعر المجمع الإداري الرئيسي",
+    source: "System"
+  }
+];
+
 export default function AdminPanel({ devices, selectedDevice, lang }: AdminPanelProps) {
-  const [logs, setLogs] = useState<SystemLog[]>([]);
+  const [logs, setLogs] = useState<SystemLog[]>(() => {
+    const saved = localStorage.getItem("smart_savior_local_logs");
+    return saved ? JSON.parse(saved) : DEFAULT_LOGS;
+  });
   const [logFilter, setLogFilter] = useState<"all" | "info" | "warning" | "error">("all");
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [aiReport, setAiReport] = useState("");
@@ -46,9 +80,10 @@ export default function AdminPanel({ devices, selectedDevice, lang }: AdminPanel
       if (res.ok) {
         const data = await res.json();
         setLogs(data);
+        localStorage.setItem("smart_savior_local_logs", JSON.stringify(data));
       }
     } catch (err) {
-      console.error(err);
+      console.warn("Backend logs unreachable, using cached localStorage logs:", err);
     }
   };
 

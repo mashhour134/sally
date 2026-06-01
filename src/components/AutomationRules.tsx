@@ -11,8 +11,34 @@ interface AutomationRulesProps {
   lang: "ar" | "en";
 }
 
+const DEFAULT_RULES: AutomationRule[] = [
+  {
+    id: "auto-relay-ventilation",
+    name: "مروحة شفاط الصالة التلقائية",
+    field: "sensorValue",
+    operator: ">",
+    value: 500,
+    actionType: "trigger_relay",
+    actionValue: "relay_on",
+    active: true
+  },
+  {
+    id: "auto-warning-sms",
+    name: "إشعار طوارئ ودق صفارة الحريق",
+    field: "sensorValue",
+    operator: ">",
+    value: 400,
+    actionType: "emergency",
+    actionValue: "siren_on",
+    active: true
+  }
+];
+
 export default function AutomationRules({ lang }: AutomationRulesProps) {
-  const [rules, setRules] = useState<AutomationRule[]>([]);
+  const [rules, setRules] = useState<AutomationRule[]>(() => {
+    const saved = localStorage.getItem("smart_savior_local_rules");
+    return saved ? JSON.parse(saved) : DEFAULT_RULES;
+  });
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [triggerValue, setTriggerValue] = useState(400);
@@ -45,9 +71,10 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
       if (res.ok) {
         const data = await res.json();
         setRules(data);
+        localStorage.setItem("smart_savior_local_rules", JSON.stringify(data));
       }
     } catch (err) {
-      console.error(err);
+      console.warn("Backend rules unreachable, using offline rules dataset:", err);
     } finally {
       setLoading(false);
     }
@@ -58,31 +85,60 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
   }, []);
 
   const handleToggleRule = async (id: string) => {
+    const toggled = rules.map(r => r.id === id ? { ...r, active: !r.active } : r);
+    setRules(toggled);
+    localStorage.setItem("smart_savior_local_rules", JSON.stringify(toggled));
+
     try {
       const res = await fetch(getApiUrl(`/api/rules/${id}/toggle`), { method: "POST" });
       if (res.ok) {
         const updated = await res.json();
-        setRules(rules.map(r => r.id === id ? updated : r));
+        const synced = rules.map(r => r.id === id ? updated : r);
+        setRules(synced);
+        localStorage.setItem("smart_savior_local_rules", JSON.stringify(synced));
       }
     } catch (err) {
-      console.error(err);
+      console.warn("Offline note: Toggled automation rule local state.", err);
     }
   };
 
   const handleDeleteRule = async (id: string) => {
+    const updated = rules.filter(r => r.id !== id);
+    setRules(updated);
+    localStorage.setItem("smart_savior_local_rules", JSON.stringify(updated));
+
     try {
       const res = await fetch(getApiUrl(`/api/rules/${id}`), { method: "DELETE" });
-      if (res.ok) {
-        setRules(rules.filter(r => r.id !== id));
-      }
     } catch (err) {
-      console.error(err);
+      console.warn("Offline note: Deleted automation rule locally.", err);
     }
   };
 
   const handleSubmitRule = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
+
+    const tempId = `local-rule-${Date.now()}`;
+    const newLocalRule: AutomationRule = {
+      id: tempId,
+      name,
+      field: "sensorValue",
+      operator: ">",
+      value: triggerValue,
+      actionType: actionType === "alert_user" ? "notify" : actionType === "trigger_relay" ? "trigger_relay" : "emergency",
+      actionValue: actionType === "alert_user" ? "siren_on" : actionType === "trigger_relay" ? "relay_on" : "quarantine",
+      active: true
+    };
+
+    const updated = [newLocalRule, ...rules];
+    setRules(updated);
+    localStorage.setItem("smart_savior_local_rules", JSON.stringify(updated));
+
+    setName("");
+    setTriggerValue(400);
+    setActionType("alert_user");
+    setShowForm(false);
+
     try {
       const res = await fetch(getApiUrl("/api/rules"), {
         method: "POST",
@@ -95,14 +151,12 @@ export default function AutomationRules({ lang }: AutomationRulesProps) {
       });
       if (res.ok) {
         const newRule = await res.json();
-        setRules([newRule, ...rules]);
-        setName("");
-        setTriggerValue(400);
-        setActionType("alert_user");
-        setShowForm(false);
+        const synced = updated.map(r => r.id === tempId ? newRule : r);
+        setRules(synced);
+        localStorage.setItem("smart_savior_local_rules", JSON.stringify(synced));
       }
     } catch (err) {
-      console.error(err);
+      console.warn("Offline note: Saved rule locally.", err);
     }
   };
 

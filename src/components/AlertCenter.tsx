@@ -11,8 +11,47 @@ interface AlertCenterProps {
   onAlertsCountChange?: (count: number) => void;
 }
 
+const DEFAULT_ALERTS: SystemAlert[] = [
+  {
+    id: "alert-1",
+    deviceId: "living-room",
+    deviceName: "مستشعر المعيشة",
+    type: "air_quality",
+    severity: "warning",
+    value: 280,
+    message: "تجاوز تركيز الغاز عتبة الأمان المؤقتة (280 PPM)",
+    timestamp: new Date().toISOString(),
+    resolved: false
+  },
+  {
+    id: "alert-2",
+    deviceId: "poultry-farm",
+    deviceName: "مستشعر العنبر 1",
+    type: "air_quality",
+    severity: "danger",
+    value: 620,
+    message: "🚨 تلوث غاز خطير للغاية! تفيد القراءة بضرورة تفعيل شفاطات التهوية الكهروفيزيائية فوراً (620 PPM)",
+    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    resolved: false
+  },
+  {
+    id: "alert-3",
+    deviceId: "office-main",
+    deviceName: "مستشعر الإدارة",
+    type: "device_offline",
+    severity: "danger",
+    value: 0,
+    message: "حدث عطل: انقطع الاتصال بمستشعر الإدارة منذ أكثر من 15 دقيقة بشكل مفاجئ",
+    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
+    resolved: true
+  }
+];
+
 export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterProps) {
-  const [alerts, setAlerts] = useState<SystemAlert[]>([]);
+  const [alerts, setAlerts] = useState<SystemAlert[]>(() => {
+    const saved = localStorage.getItem("smart_savior_local_alerts");
+    return saved ? JSON.parse(saved) : DEFAULT_ALERTS;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "warning" | "danger" | "device_offline">("all");
   const [loading, setLoading] = useState(false);
@@ -43,12 +82,13 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
       if (res.ok) {
         const data: SystemAlert[] = await res.json();
         setAlerts(data);
+        localStorage.setItem("smart_savior_local_alerts", JSON.stringify(data));
         if (onAlertsCountChange) {
           onAlertsCountChange(data.filter(a => !a.resolved).length);
         }
       }
     } catch (err) {
-      console.error("Error reading alert center registries:", err);
+      console.warn("Backend alerts unreachable, running offline with localStorage database:", err);
     } finally {
       setLoading(false);
     }
@@ -62,31 +102,39 @@ export default function AlertCenter({ lang, onAlertsCountChange }: AlertCenterPr
   }, []);
 
   const handleResolve = async (id: string) => {
+    const offlineUpdated = alerts.map(a => a.id === id ? { ...a, resolved: true } : a);
+    setAlerts(offlineUpdated);
+    localStorage.setItem("smart_savior_local_alerts", JSON.stringify(offlineUpdated));
+    if (onAlertsCountChange) {
+      onAlertsCountChange(offlineUpdated.filter(a => !a.resolved).length);
+    }
+
     try {
       const res = await fetch(getApiUrl(`/api/alerts/${id}/resolve`), {
         method: "POST"
       });
       if (res.ok) {
         const updatedAlerts = await res.json();
-        await fetchAlerts();
+        setAlerts(updatedAlerts);
+        localStorage.setItem("smart_savior_local_alerts", JSON.stringify(updatedAlerts));
       }
     } catch (err) {
-      console.error("Error resolving alarm:", err);
+      console.warn("Offline note: Alert resolved locally.", err);
     }
   };
 
   const handleClearAll = async () => {
     if (!window.confirm(isAr ? "هل أنت متأكد من مسح جميع تنبيهات السجل بالكامل؟" : "Confirm deleting historical summaries?")) return;
+    setAlerts([]);
+    localStorage.setItem("smart_savior_local_alerts", JSON.stringify([]));
+    if (onAlertsCountChange) onAlertsCountChange(0);
+
     try {
       const res = await fetch(getApiUrl("/api/alerts/clear"), {
         method: "POST"
       });
-      if (res.ok) {
-        setAlerts([]);
-        if (onAlertsCountChange) onAlertsCountChange(0);
-      }
     } catch (err) {
-      console.error("Error purging logs:", err);
+      console.warn("Offline note: Purged local alerts.", err);
     }
   };
 
