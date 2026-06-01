@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { 
   Settings, Moon, Sun, Monitor, Bell, Volume2, 
-  Vibrate, Shield, Sliders, RefreshCw, FolderLock, Globe
+  Vibrate, Shield, Sliders, RefreshCw, FolderLock, Globe, Heart
 } from "lucide-react";
 
 interface SettingsScreenProps {
   lang: "ar" | "en";
   onChangeLang: (lang: "ar" | "en") => void;
-  theme: "light" | "dark" | "system";
-  onChangeTheme: (theme: "light" | "dark" | "system") => void;
+  theme: "light" | "dark" | "pink";
+  onChangeTheme: (theme: "light" | "dark" | "pink") => void;
   thresholds: { safe: number; warning: number; danger: number };
   onUpdateThresholds: (thresholds: { safe: number; warning: number; danger: number }) => void;
 }
@@ -40,7 +40,7 @@ export default function SettingsScreen({
     appearance: isAr ? "تخصيص المظهر" : "Visual Appearance",
     tgLight: isAr ? "فاتح" : "Light",
     tgDark: isAr ? "داكن" : "Dark",
-    tgSystem: isAr ? "النظام" : "System",
+    tgPink: isAr ? "زهري 🌸" : "Pink 🌸",
     language: isAr ? "لغة الواجهة" : "System Language",
     ar: isAr ? "العربية" : "Arabic",
     en: isAr ? "الإنجليزية" : "English",
@@ -100,7 +100,7 @@ export default function SettingsScreen({
           {[
             { id: "light" as const, label: t.tgLight, icon: <Sun className="w-3.5 h-3.5" /> },
             { id: "dark" as const, label: t.tgDark, icon: <Moon className="w-3.5 h-3.5" /> },
-            { id: "system" as const, label: t.tgSystem, icon: <Monitor className="w-3.5 h-3.5" /> }
+            { id: "pink" as const, label: t.tgPink, icon: <Heart className="w-3.5 h-3.5 text-rose-500 animate-pulse" /> }
           ].map((item) => {
             const active = theme === item.id;
             return (

@@ -28,8 +28,9 @@ export default function App() {
 
   // Layout preference states
   const [lang, setLang] = useState<"ar" | "en">("ar");
-  const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">("dark");
-  const [activeTab, setActiveTab] = useState<"home" | "analytics" | "alerts" | "devices" | "admin" | "settings" | "profile" | "automation">("home");
+  const [themeMode, setThemeMode] = useState<"light" | "dark" | "pink">("dark");
+  const [activeTab, setActiveTab] = useState<"home" | "analytics" | "alerts" | "devices" | "admin" | "settings" | "profile" | "automation" | "menu">("home");
+  const [mobileViewMode, setMobileViewMode] = useState<"app" | "hardware">("app");
 
   // Telemetry sensor states
   const [devices, setDevices] = useState<Device[]>([]);
@@ -224,6 +225,72 @@ export default function App() {
         );
       case "automation":
         return <AutomationRules lang={lang} />;
+      case "menu":
+        return (
+          <div className="space-y-4 select-none pb-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Sliders className="w-5 h-5 text-sky-400" />
+              <h2 className="text-base font-bold text-white">{isAr ? "أدوات النظام" : "System Utilities"}</h2>
+            </div>
+            <p className="text-[10px] text-slate-400">
+              {isAr ? "تحقق من تفاصيل الأجهزة، الإعدادات المتقدمة، وملف التعريف الخاص بالمنظومة." : "Manage system sensors, credentials, and console diagnostics."}
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              {/* Device management card */}
+              <button
+                onClick={() => setActiveTab("devices")}
+                className="p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 rounded-2xl text-right flex flex-col justify-between h-24 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <div className="p-1.5 bg-sky-500/10 text-sky-400 rounded-lg w-fit">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-[11px] text-white block leading-tight">{isAr ? "إدارة الأجهزة" : "Devices"}</span>
+                  <span className="text-[8px] text-slate-400">{isAr ? "ربط وحواسب الاستشعار" : "Configure ESP nodes"}</span>
+                </div>
+              </button>
+              {/* Admin console card */}
+              <button
+                onClick={() => setActiveTab("admin")}
+                className="p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 rounded-2xl text-right flex flex-col justify-between h-24 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <div className="p-1.5 bg-emerald-500/10 text-emerald-400 rounded-lg w-fit">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-[11px] text-white block leading-tight">{isAr ? "لوحة الإشراف" : "Supervisor Console"}</span>
+                  <span className="text-[8px] text-slate-400">{isAr ? "تفاصيل الاتصال وقيم الخام" : "Diagnostics logs"}</span>
+                </div>
+              </button>
+              {/* Settings card */}
+              <button
+                onClick={() => setActiveTab("settings")}
+                className="p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 rounded-2xl text-right flex flex-col justify-between h-24 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <div className="p-1.5 bg-amber-500/10 text-amber-400 rounded-lg w-fit">
+                  <Settings className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-[11px] text-white block leading-tight">{isAr ? "ضبط المنظومة" : "Settings"}</span>
+                  <span className="text-[8px] text-slate-400">{isAr ? "تعديل حدود الخطر واللغة" : "Language & limits"}</span>
+                </div>
+              </button>
+              {/* Profile card */}
+              <button
+                onClick={() => setActiveTab("profile")}
+                className="p-3 bg-slate-900/80 hover:bg-slate-800 border border-slate-800/80 rounded-2xl text-right flex flex-col justify-between h-24 cursor-pointer transition-all hover:scale-[1.02]"
+              >
+                <div className="p-1.5 bg-purple-500/10 text-purple-400 rounded-lg w-fit">
+                  <User className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="font-bold text-[11px] text-white block leading-tight">{isAr ? "الحساب الشخصي" : "Profile"}</span>
+                  <span className="text-[8px] text-slate-400">{isAr ? "تسجيل الخروج والمالك" : "Credentials & session"}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -245,19 +312,22 @@ export default function App() {
 
   // Visual layout toggle depending on dark/light
   const isLightThemeActive = themeMode === "light";
-  const deviceBgClass = isLightThemeActive 
-    ? "bg-slate-50 text-slate-900 shadow-md" 
-    : "bg-slate-950 text-slate-100";
+  const isPinkThemeActive = themeMode === "pink";
+  const deviceBgClass = isPinkThemeActive
+    ? "bg-rose-50 text-rose-950 pink-theme shadow-md"
+    : isLightThemeActive 
+      ? "bg-slate-50 text-slate-900 shadow-md" 
+      : "bg-slate-950 text-slate-100";
 
   return (
-    <div id="application-layout" className="min-h-screen bg-slate-950 flex flex-col justify-between select-none relative overflow-x-hidden pt-4 pb-8 px-4 font-sans text-slate-100">
+    <div id="application-layout" className="h-[100dvh] lg:h-auto lg:min-h-screen bg-slate-950 flex flex-col justify-between select-none relative overflow-hidden lg:overflow-x-hidden p-0 lg:pt-4 lg:pb-8 lg:px-4 font-sans text-slate-100">
       
       {/* Background ambient glowing shapes to make it super elegant */}
       <div className="absolute top-[10%] left-[-20%] w-[450px] h-[450px] bg-sky-950/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-20%] w-[450px] h-[450px] bg-emerald-950/25 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Cybernetic telemetry hardware state banner */}
-      <div className="w-full max-w-5xl mx-auto mb-4 border-b border-slate-900 pb-3 flex items-center justify-between">
+      <div className="w-full max-w-5xl mx-auto mb-4 border-b border-slate-900 pb-3 flex items-center justify-between hidden lg:flex">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-gradient-to-tr from-sky-600 to-emerald-500 text-white rounded-2xl shadow-lg">
             <Wind className="w-6 h-6 animate-pulse" />
@@ -294,11 +364,39 @@ export default function App() {
         )}
       </div>
 
+      {/* Dynamic Segmented Control for Mobile Layout switching */}
+      <div id="mobile-layout-selector" className="flex lg:hidden w-[calc(100%-24px)] max-w-sm mx-auto mt-3 mb-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800/80 z-20">
+        <button
+          type="button"
+          onClick={() => setMobileViewMode("app")}
+          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileViewMode === "app"
+              ? "bg-gradient-to-tr from-sky-600 to-sky-500 text-white shadow-md font-extrabold"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Wind className="w-3.5 h-3.5" />
+          <span>{isAr ? "تطبيق الهاتف الذكي" : "Smartphone App"}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileViewMode("hardware")}
+          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            mobileViewMode === "hardware"
+              ? "bg-gradient-to-tr from-sky-600 to-sky-500 text-white shadow-md font-extrabold"
+              : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          <Cpu className="w-3.5 h-3.5" />
+          <span>{isAr ? "لوحة المحاكاة (ESP32)" : "ESP32 Simulator"}</span>
+        </button>
+      </div>
+
       {/* Split Pane: ESP32 PCB breadboard and iOS Phone frame */}
-      <div id="dual-pane-container" className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-6 items-start justify-center flex-1">
+      <div id="dual-pane-container" className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-6 items-stretch lg:items-start justify-center flex-1 min-h-0 overflow-hidden lg:overflow-visible">
         
         {/* Left Side: Custom NodeMCU hardware simulation breadboard */}
-        <div className="w-full lg:w-5/12 flex-grow space-y-4">
+        <div className={`w-full lg:w-5/12 flex-grow overflow-y-auto no-scrollbar h-full space-y-4 pb-2 ${mobileViewMode === "hardware" ? "block" : "hidden lg:block"}`}>
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 backdrop-blur-md">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5 select-none">
               <ChipIcon className="w-4.5 h-4.5 text-sky-400 animate-spin" />
@@ -324,20 +422,19 @@ export default function App() {
         </div>
 
         {/* Right Side: High fidelity smartphone frame container */}
-        <div className="w-full lg:w-7/12 flex items-center justify-center">
+        <div className={`w-full lg:w-7/12 flex items-center justify-center h-full min-h-0 ${mobileViewMode === "app" ? "block flex flex-col" : "hidden lg:block"}`}>
           
-          {/* Main Visual Smartphone Shell Wrapper */}
+          {/* Main Visual Rocket/Mobile Shell Wrapper: act raw & native on real viewports, mock bezel ONLY on desktops */}
           <div 
             id="smartphone-bezel" 
             dir={isAr ? "rtl" : "ltr"}
-            className="w-full max-w-[400px] aspect-[9/19] rounded-[48px] bg-slate-900 border-[10px] border-slate-800 shadow-2xl overflow-hidden relative flex flex-col justify-between"
+            className="w-full h-full lg:max-w-[420px] lg:h-[760px] rounded-none lg:rounded-[48px] bg-slate-900 border-0 lg:border-[10px] border-slate-800 lg:shadow-2xl overflow-hidden relative flex flex-col justify-between flex-1 min-h-0"
             style={{
-              boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.5), inset 0 0 12px rbg(255 255 255 / 0.05)",
-              borderImage: "linear-gradient(to bottom, #1e293b, #0f172a) 1"
+              boxShadow: "0 25px 50px -12px rgb(0 0 0 / 0.5), inset 0 0 12px rgba(255, 255, 255, 0.05)",
             }}
           >
-            {/* Top Smartphone Camera Dynamic Island notch */}
-            <div className="absolute top-0 inset-x-0 h-6 bg-slate-900 flex justify-center z-40">
+            {/* Top Smartphone Camera Dynamic Island notch (hidden on real phone layouts to maximize space) */}
+            <div className="absolute top-0 inset-x-0 h-6 bg-slate-900 flex justify-center z-40 hidden lg:flex">
               <div className="w-28 h-4 bg-black rounded-b-xl flex items-center justify-between px-3 select-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                 <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
@@ -345,9 +442,13 @@ export default function App() {
               </div>
             </div>
 
-            {/* Simulated Mobile Status bar */}
-            <div className={`px-5 pt-7 pb-1 flex justify-between items-center text-[10px] z-30 font-sans select-none ${
-              isLightThemeActive ? "bg-slate-100 text-slate-800" : "bg-slate-900/90 text-slate-300"
+            {/* Simulated Mobile Status bar - hidden on real mobile devices to prevent duplicates, shown as mock on desktop */}
+            <div className={`px-4 pt-3 md:pt-7 pb-1 items-center text-[10px] z-30 font-sans select-none hidden lg:flex justify-between ${
+              isPinkThemeActive
+                ? "bg-rose-100/90 text-rose-950 border-b border-rose-200/40"
+                : isLightThemeActive 
+                  ? "bg-slate-50 text-slate-800" 
+                  : "bg-slate-950 text-slate-300"
             }`}>
               <div className="font-bold font-mono">
                 {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -373,9 +474,20 @@ export default function App() {
             {/* Inner scrollable viewport of mobile application */}
             <div 
               id="smartphone-viewport" 
-              className={`flex-1 overflow-y-auto px-4 py-3 relative transition-colors ${deviceBgClass}`}
+              className={`flex-1 overflow-y-auto no-scrollbar px-4 py-3 relative transition-colors ${deviceBgClass}`}
               style={{ contentVisibility: "auto" }}
             >
+              {/* Dynamically injected standard BACK header for helper screens context inside mobile More menu tab */}
+              {["devices", "admin", "settings", "profile"].includes(activeTab) && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("menu")}
+                  className="flex items-center gap-1 mb-3 text-[10px] font-semibold text-sky-400 hover:text-sky-300 font-sans cursor-pointer py-1 px-2.5 rounded-xl bg-slate-800/50 w-fit select-none"
+                >
+                  <span>{isAr ? "←" : "→"}</span>
+                  <span>{isAr ? "الرجوع للأدوات" : "Back to Tools"}</span>
+                </button>
+              )}
               {/* Emergency Danger Warning Siren Modal overlay */}
               {isDangerZone && (
                 <div className="absolute inset-0 bg-red-950/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center animate-[pulse_1.5s_infinite] border-4 border-red-500">
@@ -438,112 +550,108 @@ export default function App() {
             </div>
 
             {/* Mobile Bottom Navigation Bar styled to match Material Design 3 */}
-            <div className={`px-2.5 pt-2 pb-5 border-t select-none z-30 ${
-              isLightThemeActive ? "bg-slate-50 border-slate-200" : "bg-slate-950 border-slate-900"
+            <div className={`px-2 pt-1.5 pb-3.5 border-t select-none z-30 transition-colors ${
+              isPinkThemeActive
+                ? "bg-rose-50 border-rose-200/50"
+                : isLightThemeActive 
+                  ? "bg-slate-50 border-slate-200" 
+                  : "bg-slate-950 border-slate-900"
             }`}>
               <nav className="flex items-center justify-around">
                 
                 {/* Home tab button */}
                 <button
                   onClick={() => setActiveTab("home")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-xl transition-all cursor-pointer ${
                     activeTab === "home" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
+                      ? (isPinkThemeActive ? "text-rose-600 font-bold" : "text-sky-400 font-semibold") 
+                      : (isPinkThemeActive
+                          ? "text-rose-400 hover:text-rose-600"
+                          : isLightThemeActive 
+                            ? "text-slate-500 hover:text-slate-800" 
+                            : "text-slate-400 hover:text-slate-200")
                   }`}
                   title={isAr ? "الرئيسية" : "Home"}
                 >
-                  <Home className="w-5 h-5" />
+                  <Home className="w-4.5 h-4.5" />
                   <span className="text-[8px] font-sans font-medium">{isAr ? "الرئيسية" : "Monitor"}</span>
                 </button>
 
                 {/* Automation Rules Tab button */}
                 <button
                   onClick={() => setActiveTab("automation")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-xl transition-all cursor-pointer ${
                     activeTab === "automation" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
+                      ? (isPinkThemeActive ? "text-rose-600 font-bold" : "text-sky-400 font-semibold") 
+                      : (isPinkThemeActive
+                          ? "text-rose-400 hover:text-rose-600"
+                          : isLightThemeActive 
+                            ? "text-slate-500 hover:text-slate-800" 
+                            : "text-slate-400 hover:text-slate-200")
                   }`}
                   title={isAr ? "الأتمتة" : "Automation"}
                 >
-                  <Zap className="w-5 h-5" />
+                  <Zap className="w-4.5 h-4.5" />
                   <span className="text-[8px] font-sans font-medium">{isAr ? "الأتمتة" : "Rules"}</span>
                 </button>
 
                 {/* Analytics logs tab button */}
                 <button
                   onClick={() => setActiveTab("analytics")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-xl transition-all cursor-pointer ${
                     activeTab === "analytics" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
+                      ? (isPinkThemeActive ? "text-rose-600 font-bold" : "text-sky-400 font-semibold") 
+                      : (isPinkThemeActive
+                          ? "text-rose-400 hover:text-rose-600"
+                          : isLightThemeActive 
+                            ? "text-slate-500 hover:text-slate-800" 
+                            : "text-slate-400 hover:text-slate-200")
                   }`}
                   title={isAr ? "التحليلات" : "Analytics"}
                 >
-                  <TrendingUp className="w-5 h-5" />
+                  <TrendingUp className="w-4.5 h-4.5" />
                   <span className="text-[8px] font-sans font-medium">{isAr ? "التحليلات" : "Charts"}</span>
                 </button>
 
                 {/* Alarm alerts center tab button */}
                 <button
                   onClick={() => setActiveTab("alerts")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer relative ${
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-xl transition-all cursor-pointer relative ${
                     activeTab === "alerts" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
+                      ? (isPinkThemeActive ? "text-rose-600 font-bold" : "text-sky-400") 
+                      : (isPinkThemeActive
+                          ? "text-rose-400 hover:text-rose-600"
+                          : isLightThemeActive 
+                            ? "text-slate-500 hover:text-slate-800" 
+                            : "text-slate-400 hover:text-slate-200")
                   }`}
                   title={isAr ? "الإنذارات" : "Alarms"}
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-4.5 h-4.5" />
                   {alertsCount > 0 && (
-                    <span className="absolute top-1 right-2 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-mono font-bold animate-pulse">
+                    <span className="absolute top-0 right-1.5 w-3.5 h-3.5 bg-red-400 text-white rounded-full flex items-center justify-center text-[7px] font-mono font-bold animate-pulse">
                       {alertsCount}
                     </span>
                   )}
                   <span className="text-[8px] font-sans font-medium">{isAr ? "الإنذارات" : "Alarms"}</span>
                 </button>
 
-                {/* Admin config panel */}
+                {/* More / System tools config menu panel */}
                 <button
-                  onClick={() => setActiveTab("admin")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
-                    activeTab === "admin" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
+                  onClick={() => setActiveTab("menu")}
+                  className={`flex flex-col items-center gap-0.5 p-1 rounded-xl transition-all cursor-pointer ${
+                    activeTab === "menu" || ["devices", "admin", "settings", "profile"].includes(activeTab)
+                      ? (isPinkThemeActive ? "text-rose-600 font-bold" : "text-sky-400 font-semibold") 
+                      : (isPinkThemeActive
+                          ? "text-rose-400 hover:text-rose-600"
+                          : isLightThemeActive 
+                            ? "text-slate-500 hover:text-slate-800" 
+                            : "text-slate-400 hover:text-slate-200")
                   }`}
-                  title={isAr ? "المشرف" : "Supervisor"}
+                  title={isAr ? "الأدوات" : "Tools"}
                 >
-                  <Shield className="w-5 h-5" />
-                  <span className="text-[8px] font-sans font-medium">{isAr ? "المشرف" : "Console"}</span>
-                </button>
-
-                {/* Settings Configuration tab button */}
-                <button
-                  onClick={() => setActiveTab("settings")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
-                    activeTab === "settings" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
-                  }`}
-                  title={isAr ? "الضبط" : "Settings"}
-                >
-                  <Settings className="w-5 h-5" />
-                  <span className="text-[8px] font-sans font-medium">{isAr ? "الضبط" : "Settings"}</span>
-                </button>
-
-                {/* User credential tab button */}
-                <button
-                  onClick={() => setActiveTab("profile")}
-                  className={`flex flex-col items-center gap-1 p-1.5 rounded-xl transition-all cursor-pointer ${
-                    activeTab === "profile" 
-                      ? "text-sky-400" 
-                      : (isLightThemeActive ? "text-slate-500 hover:text-slate-800" : "text-slate-400 hover:text-slate-200")
-                  }`}
-                  title={isAr ? "الملف" : "Owner"}
-                >
-                  <User className="w-5 h-5" />
-                  <span className="text-[8px] font-sans font-medium">{isAr ? "الحساب" : "User"}</span>
+                  <Sliders className="w-4.5 h-4.5" />
+                  <span className="text-[8px] font-sans font-medium">{isAr ? "الأدوات" : "More"}</span>
                 </button>
 
               </nav>
@@ -553,7 +661,7 @@ export default function App() {
         </div>
       </div>
 
-      <footer className="text-center text-[10px] text-slate-700 font-mono select-none mt-8 border-t border-slate-900 pt-3 flex items-center justify-between max-w-5xl w-full mx-auto">
+      <footer className="text-center text-[10px] text-slate-700 font-mono select-none mt-8 border-t border-slate-900 pt-3 hidden lg:flex items-center justify-between max-w-5xl w-full mx-auto">
         <span>AIR GUARD SECURED • FIRMWARE v3.2.1</span>
         <span>MASHHOUR SOBHI • 2026</span>
       </footer>
