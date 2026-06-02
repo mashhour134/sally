@@ -21,6 +21,8 @@ This repository includes a GitHub Actions workflow that builds the Flutter web a
 Netlify's build environment does not include Flutter by default; the Netlify build log showed `flutter: command not found`.
 If you prefer Netlify to perform the build, you must provide a custom environment that installs Flutter (for example, using a Docker image) or pre-install Flutter via a build plugin — the simplest method is to use GitHub Actions as provided here.
 
+> Important: If you use Netlify continuous deploy from GitHub, set the Netlify build command to a no-op such as `echo 'skip build'` or clear the command in the Netlify UI. This repo already includes `netlify.toml` with a no-op build command.
+
 ## Trigger a deployment
 1. Add the two secrets to your GitHub repo.
 2. Push a commit to `main`.
